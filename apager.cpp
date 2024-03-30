@@ -44,6 +44,14 @@ int main(int argc, char* argv []) {
         return -1;
     }
 
+    long page_size = sysconf(_SC_PAGE_SIZE);
+    if (page_size == -1) {
+        perror("sysconf");
+        exit(EXIT_FAILURE);
+    }
+    
+    printf("Page size: %ld bytes\n", page_size);
+
     //assume elf header is set up properly now
 
     uint64_t phoff = header.e_phoff;
@@ -54,16 +62,20 @@ int main(int argc, char* argv []) {
         pread(elf_fd, &phdr, sizeof(phdr), phoff + i * header.e_ehsize);
 
         Elf64_Addr p_vaddr = phdr.p_vaddr;
+
+        Elf64_Addr align = 0; //p_vaddr % page_size;
+
         std::cout << "p_vaddr: " << p_vaddr << std::endl;
         uint64_t vaddr = (uint64_t) p_vaddr;
         std::cout << "vaddr: " << vaddr << std::endl;   
         std::cout << "phoff: " << phoff + i * header.e_ehsize << " " << phdr.p_vaddr << " " << phdr.p_memsz << std::endl;
         std::cout << "phdr.p_type: " << phdr.p_type << std::endl;
         std::cout << "phdr.p_flags: " << phdr.p_flags << std::endl;
+        std::cout << "align" << align << std::endl;
 
         std::cout << std::endl;
 
-        void* segment_data = mmap((void*) phdr.p_vaddr, phdr.p_memsz, PROT_WRITE | PROT_READ | PROT_EXEC,
+        void* segment_data = mmap((void*) (phdr.p_vaddr - align), phdr.p_memsz + align, PROT_WRITE | PROT_READ | PROT_EXEC,
                                   MAP_ANONYMOUS | MAP_PRIVATE, 0, 0);
         if (segment_data == MAP_FAILED) {
             printf("Failed to allocate memory for segment\n");
@@ -74,11 +86,13 @@ int main(int argc, char* argv []) {
             return -1;
         }
 
-        if(phdr.p_filesz > 0) {
-            std::cout << "phdr.p_filesz: " << phdr.p_filesz << std::endl;
-            // // Copy data from ELF file to memory
-            memcpy(segment_data, (void*) (phdr.p_vaddr + phdr.p_filesz), phdr.p_filesz);
-        }
+        // if(phdr.p_filesz > 0) {
+        //     std::cout << "phdr.p_filesz: " << phdr.p_filesz << std::endl;
+        //     std::cout << "segment_data: " << segment_data << std::endl;
+        //     std::cout << std::endl;
+        //     // // Copy data from ELF file to memory
+        //     memcpy(segment_data, (void*) (phdr.p_vaddr + phdr.p_filesz), phdr.p_filesz);
+        // }
     }
 
     std::cout << "header.e_entry: " << header.e_entry << std::endl;
