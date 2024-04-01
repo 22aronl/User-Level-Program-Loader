@@ -56,6 +56,7 @@ void stack_check(uint64_t *top_of_stack, uint64_t argc, char **argv) {
 
 int main(int argc, char *argv[], char *envp[]) {
     uint64_t* stack = (uint64_t*) &argv[argc];
+    (stack++);
     int envp_count = 0;
     while (*(stack++) != 0)
         envp_count++;
@@ -128,6 +129,9 @@ int main(int argc, char *argv[], char *envp[]) {
             return -1;
         }
 
+        if(phdr.p_type != PT_LOAD)
+            continue;
+
         Elf64_Addr p_vaddr = phdr.p_vaddr;
 
         Elf64_Addr align = 0; // p_vaddr % page_size;
@@ -142,6 +146,7 @@ int main(int argc, char *argv[], char *envp[]) {
             continue;
         void *segment_data = mmap((void *)(phdr.p_vaddr & ~(0x1000 - 1)), phdr.p_memsz + (phdr.p_vaddr & (0x111))+1, PROT_WRITE | PROT_READ | PROT_EXEC,
                                   MAP_ANONYMOUS | MAP_PRIVATE | MAP_FIXED, 0, 0);
+        // std::cout << "segment_data: " << segment_data << std::endl;
         if (segment_data == MAP_FAILED) {
             printf("Failed to allocate memory for segment\n");
             // print error code
@@ -164,11 +169,14 @@ int main(int argc, char *argv[], char *envp[]) {
             return -1;
         }
 
+        if(phdr.p_type != PT_LOAD)
+            continue;
+
         Elf64_Addr p_vaddr = phdr.p_vaddr;
         // if(phdr.p_filesz > 0) {
         //     std::cout << "phdr.p_filesz: " << phdr.p_filesz << std::endl;
-        // std::cout << "segment_data: " << segment_data << "  " << phdr.p_vaddr << " " << phdr.p_memsz + phdr.p_align << " " << phdr.p_filesz
-                //   << std::endl;
+        std::cout << "segment_data: " << " " << "  " << phdr.p_vaddr << " " << phdr.p_memsz + phdr.p_align << " " << phdr.p_filesz
+                  << std::endl;
         //     std::cout << std::endl;
         //     // // Copy data from ELF file to memory
 
@@ -179,6 +187,9 @@ int main(int argc, char *argv[], char *envp[]) {
             return -1;
         }
 
+        if(phdr.p_vaddr == 0)
+            continue;
+        void* segment_data = (void *)phdr.p_vaddr;
         // print out the first few bytes of the
         // char *array = (char *)segment_data;
         // for (int i = 0; i < 16; i++) {
@@ -196,7 +207,7 @@ int main(int argc, char *argv[], char *envp[]) {
 
         //     // // Zero out the rest of the memory
         // std::cout << "memset: " << phdr.p_vaddr + phdr.p_filesz << " " << phdr.p_memsz - phdr.p_filesz << std::endl;
-        memset((void *)(phdr.p_vaddr + phdr.p_filesz), 0, phdr.p_memsz - phdr.p_filesz);
+        // memset((void *)(phdr.p_vaddr + phdr.p_filesz), 0, phdr.p_memsz - phdr.p_filesz);
         // memcpy(segment_data, (void *)(phdr.p_vaddr + phdr.p_filesz), phdr.p_filesz);
         // }
 
@@ -211,11 +222,11 @@ int main(int argc, char *argv[], char *envp[]) {
     }
 
     // print out the first 16 bytes of the segment at 401650
-    void *segment_data = (void *)0x401650;
-    for (int i = 0; i < 16; i++) {
-        std::cout << std::hex << (int)((char *)segment_data)[i] << " ";
-    }
-    std::cout << std::endl;
+    // void *segment_data = (void *)0x40e000;
+    // for (int i = 0; i < 16; i++) {
+    //     std::cout << std::hex << (int)((char *)segment_data)[i] << " ";
+    // }
+    // std::cout << std::endl;
 
     std::cout << "header.e_entry: " << header.e_entry << std::endl;
 

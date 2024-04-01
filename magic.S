@@ -10,7 +10,6 @@ switch_elf:
     xor %rbx, %rbx
     xor %rdx, %rdx
     xor %rcx, %rcx
-    mov $1, %rax
     xor %rax, %rax
     xor %r8, %r8
     xor %r9, %r9
