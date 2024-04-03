@@ -1,26 +1,27 @@
 #include <stdio.h>
-#include <cstdlib>
-#include <ctime>
-#include <iostream>
+#include <stdlib.h>
+#include <stdint.h>
 
-int zeroed[1000000];
-int global[100];
+int zeroed[1000000] = {0};
+
+long x = 1, y = 4, z = 7, w = 13;
+
+long simplerand(void) {
+	long t = x;
+	t ^= t << 11;
+	t ^= t >> 8;
+	x = y;
+	y = z;
+	z = w;
+	w ^= w >> 19;
+	w ^= t;
+	return w;
+}
 
 int main(int argc, char* argv []) {
-    std::srand(std::time(nullptr));
-    printf("Hello, World!\n");
-    printf("%d\n", zeroed[5000]);
-    int counter = 0;
-    for (int i = 0; i < 1000000; i++) {
-        // rand
-        zeroed[i] += std::rand();    
-    }
-    for (int i = 0; i < 1000000; i++) {
-        counter += zeroed[i];
-    }
-    printf("%d\n", counter);
-    std::cout << "Address of zeroed: " << &zeroed << std::endl;
-    std::cout << "Address of global: " << &global << std::endl;
+    
+    zeroed[0] = 2;
+    zeroed[1000000 - 1] = 3;
+    
     return 1;
-    // printf("%p\n", (void *)zeroed);
 }

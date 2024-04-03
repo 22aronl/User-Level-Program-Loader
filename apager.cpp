@@ -61,15 +61,15 @@ int main(int argc, char *argv[], char *envp[]) {
     while (*(stack++) != 0)
         envp_count++;
 
-    printf("env count: %d\n", envp_count);
+    // printf("env count: %d\n", envp_count);
 
     Elf64_auxv_t *auxv_start = (Elf64_auxv_t *)stack;
     Elf64_auxv_t *auxv_null = auxv_start;
     while (auxv_null->a_type != AT_NULL) {
         auxv_null++;
     }
-    printf("aux count: %lu\n", auxv_null - auxv_start);
-    printf("----- end stack check -----\n");
+    // printf("aux count: %lu\n", auxv_null - auxv_start);
+    // printf("----- end stack check -----\n");
 
     // if (argc != 2) {
     //     printf("Usage: %s <file>\n", argv[0]);
@@ -113,7 +113,7 @@ int main(int argc, char *argv[], char *envp[]) {
         exit(EXIT_FAILURE);
     }
 
-    printf("Page size: %ld bytes\n", page_size);
+    // printf("Page size: %ld bytes\n", page_size);
 
     // assume elf header is set up properly now
 
@@ -140,11 +140,12 @@ int main(int argc, char *argv[], char *envp[]) {
         // uint64_t vaddr = (uint64_t)p_vaddr;
         // std::cout << "phoff: " << phoff + i * header.e_phentsize << " " << phdr.p_vaddr << " " << phdr.p_memsz << std::endl;
         // std::cout << "align" << phdr.p_align << " offset " << phdr.p_offset << " p_vaddr page " << (phdr.p_vaddr & ~(0x1000 - 1)) << std::endl;
-        std::cout << "mmap range" << std::hex << (phdr.p_vaddr & ~(0x1000 - 1)) << " " << (phdr.p_vaddr & ~(0x1000 - 1)) + phdr.p_memsz + (phdr.p_vaddr & (0x111)) << std::endl;
+        // std::cout << "mmap range" << std::hex << (phdr.p_vaddr & ~(0x1000 - 1)) << " " << (phdr.p_vaddr & ~(0x1000 - 1)) + phdr.p_memsz + (phdr.p_vaddr & (0x111)) << std::endl;
 
         if (phdr.p_vaddr == 0)
             continue;
-        void *segment_data = mmap((void *)(phdr.p_vaddr & ~(0x1000 - 1)), phdr.p_memsz + (phdr.p_vaddr & (0x111))+1, PROT_WRITE | PROT_READ | PROT_EXEC,
+        uint64_t high_address = (phdr.p_vaddr + phdr.p_memsz + (page_size - 1)) & ~(page_size - 1);
+        void *segment_data = mmap((void *)(phdr.p_vaddr & ~(0x1000 - 1)), high_address - (phdr.p_vaddr & ~(0x1000 - 1)), PROT_WRITE | PROT_READ | PROT_EXEC,
                                   MAP_ANONYMOUS | MAP_PRIVATE | MAP_FIXED, 0, 0);
         // std::cout << "segment_data: " << segment_data << std::endl;
         if (segment_data == MAP_FAILED) {
@@ -175,8 +176,8 @@ int main(int argc, char *argv[], char *envp[]) {
         Elf64_Addr p_vaddr = phdr.p_vaddr;
         // if(phdr.p_filesz > 0) {
         //     std::cout << "phdr.p_filesz: " << phdr.p_filesz << std::endl;
-        std::cout << "segment_data: " << " " << "  " << phdr.p_vaddr << " " << phdr.p_memsz + phdr.p_align << " " << phdr.p_filesz
-                  << std::endl;
+        // std::cout << "segment_data: " << " " << "  " << phdr.p_vaddr << " " << phdr.p_memsz + phdr.p_align << " " << phdr.p_filesz
+        //           << std::endl;
         //     std::cout << std::endl;
         //     // // Copy data from ELF file to memory
 
@@ -228,7 +229,7 @@ int main(int argc, char *argv[], char *envp[]) {
     // }
     // std::cout << std::endl;
 
-    std::cout << "header.e_entry: " << header.e_entry << std::endl;
+    // std::cout << "header.e_entry: " << header.e_entry << std::endl;
 
     // stack = (uint64_t*) &argv[argc];
     // int envp_count = 0;
@@ -260,7 +261,7 @@ int main(int argc, char *argv[], char *envp[]) {
         exit(EXIT_FAILURE);
     }
 
-    std::cout << "new_stack: " << new_stack << std::endl;
+    // std::cout << "new_stack: " << new_stack << std::endl;
     uint64_t argc_ = argc;
     uint64_t* stack_top = (uint64_t *)new_stack;
     *(stack_top++) = argc;
@@ -292,7 +293,7 @@ int main(int argc, char *argv[], char *envp[]) {
 
     // new_stack_ar[argc + envp_count + 4 + (auxv_null - auxv_start) * 2] = NULL;
 
-    stack_check((uint64_t *)new_stack, argc, argv);
+    // stack_check((uint64_t *)new_stack, argc, argv);
 
     // for (auxv = (Elf32_auxv_t *)envp; auxv->a_type != AT_NULL; auxv++)
     // /* auxv->a_type = AT_NULL marks the end of auxv */
@@ -316,7 +317,7 @@ int main(int argc, char *argv[], char *envp[]) {
     //     size++;
     // }
 
-    std::cout << "size: " << 0 << std::endl;
+    // std::cout << "size: " << 0 << std::endl;
 
     uint64_t entry = (uint64_t)header.e_entry;
 

@@ -10,7 +10,7 @@
 #include <sys/mman.h>
 #include <unistd.h>
 
-// g++ -g -fpermissive -o dpager dpager.cpp magic.S -static -T layout.ld
+// g++ -fpermissive -o dpager dpager.cpp magic.S -static -T layout.ld
 
 extern "C" void switch_elf(uint64_t entry, void *stack);
 // extern char** environ;
@@ -123,15 +123,15 @@ int main(int argc, char *argv[], char *envp[]) {
     while (*(stack++) != 0)
         envp_count++;
 
-    printf("env count: %d\n", envp_count);
+    // printf("env count: %d\n", envp_count);
 
     Elf64_auxv_t *auxv_start = (Elf64_auxv_t *)stack;
     Elf64_auxv_t *auxv_null = auxv_start;
     while (auxv_null->a_type != AT_NULL) {
         auxv_null++;
     }
-    printf("aux count: %lu\n", auxv_null - auxv_start);
-    printf("----- end stack check -----\n");
+    // printf("aux count: %lu\n", auxv_null - auxv_start);
+    // printf("----- end stack check -----\n");
 
     struct sigaction sa;
     sa.sa_sigaction = signalHandler;
@@ -182,27 +182,6 @@ int main(int argc, char *argv[], char *envp[]) {
             close(elf_fd);
             return -1;
         }
-
-        // Elf64_Addr p_vaddr = phdr.p_vaddr;
-
-        // Elf64_Addr align = 0; // p_vaddr % page_size;
-
-        // std::cout << "mmap range" << std::hex << (phdr.p_vaddr & ~(0x1000 - 1)) << " " << (phdr.p_vaddr & ~(0x1000 - 1)) + phdr.p_memsz +
-        // (phdr.p_vaddr & (0x111)) << std::endl;
-
-        // if (phdr.p_vaddr == 0)
-        //     continue;
-        // void *segment_data = mmap((void *)(phdr.p_vaddr & ~(0x1000 - 1)), phdr.p_memsz + (phdr.p_vaddr & (0x111))+1, PROT_WRITE | PROT_READ |
-        // PROT_EXEC,
-        //                           MAP_ANONYMOUS | MAP_PRIVATE | MAP_FIXED, 0, 0);
-        // if (segment_data == MAP_FAILED) {
-        //     printf("Failed to allocate memory for segment\n");
-        //     // print error code
-        //     perror("mmap");
-        //     // std::cerr << "Failed to allocate memory for segment" << std::endl;
-        //     close(elf_fd);
-        //     return -1;
-        // }
     }
 
     void *new_stack = mmap(NULL, 8 * 1024 * 1024, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0) + 8 * 1024 * 1024 -
@@ -214,7 +193,7 @@ int main(int argc, char *argv[], char *envp[]) {
         exit(EXIT_FAILURE);
     }
 
-    std::cout << "new_stack: " << new_stack << std::endl;
+    // std::cout << "new_stack: " << new_stack << std::endl;
     uint64_t argc_ = argc;
     uint64_t *stack_top = (uint64_t *)new_stack;
     *(stack_top++) = argc;
@@ -236,7 +215,7 @@ int main(int argc, char *argv[], char *envp[]) {
     }
     *(auxv_stack) = (Elf64_auxv_t){AT_NULL, 0};
 
-    stack_check((uint64_t *)new_stack, argc, argv);
+    // stack_check((uint64_t *)new_stack, argc, argv);
 
     uint64_t entry = (uint64_t)header.e_entry;
 

@@ -11,7 +11,7 @@
 #include <sys/mman.h>
 #include <unistd.h>
 
-// g++ -fpermissive -o hpager hpager.cpp magic.S -static -T layout.ld
+// g++ -fpermissive -o hpager3 hpager3.cpp magic.S -static -T layout.ld
 
 extern "C" void switch_elf(uint64_t entry, void *stack);
 // extern char** environ;
@@ -75,7 +75,7 @@ void signalHandler(int signum, siginfo_t *info, void *context) {
 
     if (segfault_addresses->find(page_start) == segfault_addresses->end()) {
         // std::cerr << "mmap range2 " << std::hex << page_start << " " << page_start + page_size << std::endl;
-        void *segment_data = mmap((void *)page_start, page_size, PROT_READ | PROT_WRITE | PROT_EXEC, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+        void *segment_data = mmap((void *)page_start, page_size * 2, PROT_READ | PROT_WRITE | PROT_EXEC, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
         // std::cerr << "segment data " << segment_data << std::endl;
         if (segment_data == MAP_FAILED) {
             std::cerr << "Failed to allocate memory for segment" << std::endl;
@@ -83,6 +83,7 @@ void signalHandler(int signum, siginfo_t *info, void *context) {
             exit(EXIT_FAILURE);
         }
         segfault_addresses->insert(page_start);
+        segfault_addresses->insert(page_start + page_size);
     }
 
     // exit(signum);
@@ -181,7 +182,7 @@ int main(int argc, char *argv[], char *envp[]) {
         // uint64_t vaddr = (uint64_t)p_vaddr;
         // std::cout << "phoff: " << phoff + i * header.e_phentsize << " " << phdr.p_vaddr << " " << phdr.p_memsz << std::endl;
         // std::cout << "align" << phdr.p_align << " offset " << phdr.p_offset << " p_vaddr page " << (phdr.p_vaddr & ~(0x1000 - 1)) << std::endl;
-        
+
         if (phdr.p_type != PT_LOAD)
             continue;
         if (phdr.p_vaddr == 0)
@@ -205,7 +206,6 @@ int main(int argc, char *argv[], char *envp[]) {
             close(elf_fd);
             return -1;
         }
-
 
         // Elf64_Addr p_vaddr = phdr.p_vaddr;
 
